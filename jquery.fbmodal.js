@@ -1,72 +1,29 @@
-/*
- * FBModal 1.0.0 - jQuery Plugin
- * http://www.rrpowered.com/FBModal
- * Copyright (C)  2010  Barrett Palmer (http://www.rrpowred.com).
- * Permission is granted to copy, distribute and/or modify this document
- * under the terms of the GNU Free Documentation License, Version 1.3
- * or any later version published by the Free Software Foundation;
- * with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
- * A copy of the license is included in the section entitled "GNU
- * Free Documentation License"
- *
- *
- * FBModal is a FaceBook replica modal dialog
- *
- * only one modal dialog can be created at a time.
- *
- 
- *
- * @example $(".YOURDIV").fbmodal({options}); 
- * 
- * FBModal default options
- *
- *        title: "YOUR TITLE HERE",   Dialog title text 
- *       cancel: "Cancel",            Cancel button text
- *         okay: "Okay",              Okay button text
- *   okaybutton: true,                show the ok button
- * cancelbutton: true,                Show the cancel button
- *      buttons: true,                Show the buttons
- *      opacity: 0.0,                 The opacity value for the overlay div, from 0.0 - 100.0
- *      fadeout: true,                When dialog is closed fade out
- * overlayclose: true,                Allow click on overlay to close the dialog?
- *     modaltop: "30%",               Position from top of page 0% - 100% or 0px - 99999px
- *   modalwidth: "400"                The width for the dialog container 
- * });
- *
- * SFBModal has been tested in the following browsers:
- * - IE 8
- * - Firefox 2, 3
- * - Safari 3, 4
- * - Chrome 1, 2
- *
- * @name FBModal
- * @type jQuery
- * @requires jQuery v1.4.2
- * @cat Plugins/Windows and Overlays
- * @author Barrett Palmer (http://www.rrpowered.com)
- * @version 1.0.0
- *
- */
-(function ($) {
-    $.fn.fbmodal = function (options) {
+// jQuery Plugin Boilerplate
+// A boilerplate for jumpstarting jQuery plugins development
+// version 1.1, May 14th, 2011
+// by Stefan Gabos
 
-        //Default values
+(function($) {
+
+    $.fbmodal = function(element, options) {
+
         var defaults = {
-            title: "FB Modal",
-            cancel: "Cancel",
-            okay: "Okay",
-            okaybutton: true,
-            cancelbutton: true,
-            buttons: true,
-            opacity: 0.0,
-            fadeout: true,
-            overlayclose: true,
-            modaltop: "30%",
-            modalwidth: "",
-            onClose: function(){}
-        };
+            title:        'FB Modal',
+            cancel:       'Cancel',
+            okay:         'Okay',
 
-        var options = $.extend(defaults, options);
+            loading_gif: '/images/loading.gif',
+
+            okaybutton:   true,
+            cancelbutton: true,
+            buttons:      true,
+            opacity:      0.0,
+            fadeout:      true,
+            overlayclose: true,
+            modaltop:     '30%',
+            modalwidth:   '',
+            onClose:      function(){}
+        }
 
         var fbmodalHtml = ' \
 <div id="fbmodal" > \
@@ -110,67 +67,118 @@
 </div> \
 </div>';
 
-        var preload = [new Image(), new Image()]
-        $('#fbmodal').find('.b:first, .bl, .br, .tl, .tr').each(function () {
-            preload.push(new Image())
-            preload.slice(-1).src = $(this).css('background-image').replace(/url\((.+)\)/, '$1')
-        })
-        var dat = this.html();
-        $("body").append(fbmodalHtml);
-        $('#fbmodal .content').
-        append('<div class="loading"><img src="/images/loading.gif"/></div>');
-        $('#fbmodal').css("top", options.modaltop);
-        if (options.okaybutton == false || options.buttons == false) {
-            $('#fbmodal #ok').hide();
-        }
-        if (options.cancelbutton == false || options.buttons == false) {
-            $('#fbmodal #close').hide();
-            options.onClose.call(this);
-        }
-        $('#fbmodal .title').append(options.title);
-        $('#fbmodal #okay').append(options.okay);
-        $('#fbmodal #cancel').append(options.cancel);
-        $('#fbmodal .content').append(dat).css("width", options.modalwidth);
-        $('#fbmodal .loading').remove();
-        $("body").append('<div id="fbmodal_overlay" class="fbmodal_hide"></div>');
-        $('#fbmodal_overlay').addClass("fbmodal_overlay").fadeTo(0, options.opacity);
-        fbWidth();
-        $(window).bind("resize", function () {
-            fbWidth();
-        });
+        var plugin = this;
 
-        function fbWidth() {
+        plugin.settings = {};
+
+        var $element = $(element),
+             element = element;
+
+        plugin.init = function() {
+            plugin.settings = $.extend({}, defaults, options);
+
+            var dat = $element.html();
+            
+            // Add the new modal to the page if one doesn't already exist
+            if( !$('#fbmodal').length ) {
+                $("body").append(fbmodalHtml);
+                $('#fbmodal').css("top", options.modaltop);
+            }
+
+            // Add a login spinner whilst we get things sorted
+            $('#fbmodal .content')
+                .append('<div class="loading"><img src="' + plugin.settings.loading_gif + '"></div>');
+
+            // Hide the okay button if required
+            if (options.okaybutton == false || options.buttons == false) {
+                $('#fbmodal #ok').hide();
+            }
+
+            // Hide the close button if required
+            if (options.cancelbutton == false || options.buttons == false) {
+                $('#fbmodal #close').hide();
+            }
+
+            // Apend the overlay
+            $("body").append('<div id="fbmodal_overlay" class="fbmodal_hide"></div>');
+            $('#fbmodal_overlay').addClass("fbmodal_overlay").fadeTo(0, options.opacity);
+
+            $('#fbmodal .title').append(options.title);
+            $('#fbmodal #okay').append(options.okay);
+            $('#fbmodal #cancel').append(options.cancel);
+            $('#fbmodal .content').append(dat).css("width", options.modalwidth);
+            $('#fbmodal .loading').remove();
+
+            fbWidth();
+
+            // On window resize, resize the modal
+            $(window).bind("resize", function () {
+                fbWidth();
+            });
+
+            // If overlay close is true, 
+            if (plugin.settings.overlayclose == true) {
+                var overlay = "ok, #close, .fbmodal_hide"
+            } else {
+                var overlay = "ok, #close"
+            }
+            $("#" + overlay).click(function () {
+                if (options.fadeout == true) {
+                    $("#fbmodal").fadeOut(plugin.close());
+                } else {
+                    plugin.close();
+                }
+            });
+        }
+
+        plugin.close = function() {
+            $('#fbmodal_overlay').remove();
+            $('#fbmodal').remove();
+            $element.removeData('fbmodal');
+            console.log( 'closing fbmodal' );
+            console.log($element.data('fbmodal'))
+
+
+            null.settings.onClose.call();
+        }
+
+        var closeOverlay = function() {
+            $("#fbmodal").remove();
+            $('#fbmodal_overlay').removeClass("fbmodal_overlay");
+            plugin.settings.onClose.call();
+        }
+
+        var preloadImages = function() {
+            // Preload Images
+            var preload = [new Image(), new Image()]
+            $('#fbmodal').find('.b:first, .bl, .br, .tl, .tr').each(function () {
+                preload.push(new Image())
+                preload.slice(-1).src = $(this).css('background-image').replace(/url\((.+)\)/, '$1')
+            });
+        }
+
+       var fbWidth = function() {
             var windowWidth = $(window).width();
             var fbmodalWidth = $("#fbmodal").width();
             var fbWidth = windowWidth / 2 - fbmodalWidth / 2;
             $("#fbmodal").css("left", fbWidth);
         }
-        if (options.close == true) {
-            if (options.fadeout == true) {
-                $("#fbmodal").fadeOut(function () {
-                    $("#fbmodal").remove();
-                    $('#fbmodal_overlay').removeClass("fbmodal_overlay");
-                });
-            } else {
-                $("#fbmodal").remove();
-                $('#fbmodal_overlay').removeClass("fbmodal_overlay");
-            }
-        }
-        if (options.overlayclose == true) {
-            var overlay = "ok, #close, .fbmodal_hide"
-        } else {
-            var overlay = "ok, #close"
-        }
-        $("#" + overlay).click(function () {
-            if (options.fadeout == true) {
-                $("#fbmodal").fadeOut(function () {
-                    $("#fbmodal").remove();
-                    $('#fbmodal_overlay').removeClass("fbmodal_overlay");
-                });
-            } else {
-                $("#fbmodal").remove();
-                $('#fbmodal_overlay').removeClass("fbmodal_overlay");
+
+        plugin.init();
+
+    }
+
+    $.fn.fbmodal = function(options) {
+
+        return this.each(function() {
+            console.log( 'attempting to setup modal' );
+            if (undefined == $(this).data('fbmodal')) {
+                console.log( 'modal setup' );
+                var plugin = new $.fbmodal(this, options);
+                $(this).data('fbmodal', plugin);
             }
         });
+
     }
+
 })(jQuery);
