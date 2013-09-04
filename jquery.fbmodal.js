@@ -22,6 +22,9 @@
             overlayclose: true,
             modaltop:     '30%',
             modalwidth:   '',
+            beforeOpen:   function(){},
+            beforeClose:  function(){},
+            onOpen:       function(){},
             onClose:      function(){}
         }
 
@@ -85,6 +88,9 @@
                 $('#fbmodal').css("top", options.modaltop);
             }
 
+            // Launch a callback before the modal opens
+            plugin.settings.beforeOpen.call();
+
             // Add a login spinner whilst we get things sorted
             $('#fbmodal .content')
                 .append('<div class="loading"><img src="' + plugin.settings.loading_gif + '"></div>');
@@ -116,6 +122,9 @@
                 fbWidth();
             });
 
+            // Launch callback when the modal is created
+            plugin.settings.onOpen.call();
+
             // If overlay close is true, 
             if (plugin.settings.overlayclose == true) {
                 var overlay = "ok, #close, .fbmodal_hide"
@@ -132,14 +141,15 @@
         }
 
         plugin.close = function() {
+            // Launch callback before the modal is closed
+            plugin.settings.beforeClose.call();
+
             $('#fbmodal_overlay').remove();
             $('#fbmodal').remove();
             $element.removeData('fbmodal');
-            console.log( 'closing fbmodal' );
-            console.log($element.data('fbmodal'))
 
-
-            null.settings.onClose.call();
+           // Launch callback before the modal is closed
+            plugin.settings.onClose.call();
         }
 
         var closeOverlay = function() {
@@ -171,9 +181,7 @@
     $.fn.fbmodal = function(options) {
 
         return this.each(function() {
-            console.log( 'attempting to setup modal' );
             if (undefined == $(this).data('fbmodal')) {
-                console.log( 'modal setup' );
                 var plugin = new $.fbmodal(this, options);
                 $(this).data('fbmodal', plugin);
             }
